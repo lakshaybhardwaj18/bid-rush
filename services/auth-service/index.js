@@ -10,11 +10,6 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-app.use((req, res, next) => {
-  console.log('Request received:', req.method, req.path)
-  next()
-})
-
 // Health check
 app.get('/', (req, res) => {
   res.json({ message: 'Auth Service running' })
