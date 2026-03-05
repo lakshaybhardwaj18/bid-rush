@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
       console.log(`Auction Service running on port ${process.env.PORT}`)
     })
     // Start cron jobs after DB connects
-    // require('./jobs/auctionClose.job')
+     require('./jobs/auctionClose.job')
   })
   .catch((error) => {
     console.error('MongoDB connection failed:', error)
