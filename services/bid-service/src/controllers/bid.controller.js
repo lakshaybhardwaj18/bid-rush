@@ -2,13 +2,26 @@ const Bid = require('../models/bid.model');
 const Redis = require('ioredis');
 const axios = require('axios');
 const mongoose = require('mongoose');
+const { Queue } = require('bullmq');
 
-const redis = new Redis(process.env.REDIS_URL);
+// ── Redis connection ──────────────────────────────
+const redis = new Redis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null
+});
 
 redis.on('connect', () => console.log('✅ Redis connected'));
 redis.on('error', (err) => console.error('❌ Redis error:', err.message));
 
-// Separate connection to auction-db to validate auctions
+// ── BullMQ notification queue ─────────────────────
+// Instead of calling Member 4 directly, we push a job to this queue
+// Member 4 will listen to this queue and process notifications
+const notificationQueue = new Queue('notification-queue', {
+  connection: new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null
+  })
+});
+
+// ── Separate connection to auction-db ─────────────
 const auctionConn = mongoose.createConnection(
   process.env.MONGO_URI.replace('bid-db', 'auction-db')
 );
@@ -24,19 +37,31 @@ const Auction = auctionConn.model(
 // Body: { auctionId, amount }
 // ═══════════════════════════════════════════════════
 const placeBid = async (req, res) => {
+  const { auctionId, amount } = req.body;
+  const userId = req.user.userId;
+
+  // ── Validate inputs ────────────────────────────
+  if (!auctionId || amount === undefined) {
+    return res.status(400).json({ message: 'Both auctionId and amount are required.' });
+  }
+  if (typeof amount !== 'number' || amount <= 0) {
+    return res.status(400).json({ message: 'Amount must be a positive number.' });
+  }
+
+  // ── Redis Distributed Lock ─────────────────────
+  // NX = only set if key doesn't exist (lock)
+  // PX = auto expire after 5000ms (safety unlock)
+  // This ensures only ONE bid processes at a time per auction
+  const lockKey = `lock:auction:${auctionId}`;
+  const lockValue = `${userId}-${Date.now()}`;
+  const lock = await redis.set(lockKey, lockValue, 'NX', 'PX', 5000);
+
+  if (!lock) {
+    return res.status(429).json({ message: 'Another bid is being processed. Please try again.' });
+  }
+
   try {
-    const { auctionId, amount } = req.body;
-    const userId = req.user.userId;
-
-    // Validate inputs
-    if (!auctionId || amount === undefined) {
-      return res.status(400).json({ message: 'Both auctionId and amount are required.' });
-    }
-    if (typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).json({ message: 'Amount must be a positive number.' });
-    }
-
-    // Check auction exists and is active directly from auction-db
+    // ── Check auction exists and is active ────────
     let auction;
     try {
       auction = await Auction.findById(auctionId);
@@ -51,7 +76,7 @@ const placeBid = async (req, res) => {
       return res.status(400).json({ message: 'This auction is not currently accepting bids.' });
     }
 
-    // Check against current highest bid from Redis
+    // ── Check against current highest bid from Redis ──
     const redisKey = `auction:${auctionId}:highestBid`;
     const currentHighestStr = await redis.get(redisKey);
     const currentHighest = currentHighestStr ? parseFloat(currentHighestStr) : 0;
@@ -62,47 +87,57 @@ const placeBid = async (req, res) => {
       });
     }
 
-    // Get previous highest bidder before updating
-    const previousHighestBid = await Bid.findOne({ auctionId, status: 'active' });
+    // ── MongoDB Transaction ────────────────────────
+    // Ensures both operations succeed or both fail together
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Mark all previous active bids as outbid
-    await Bid.updateMany(
-      { auctionId, status: 'active' },
-      { $set: { status: 'outbid' } }
-    );
-
-    // Save new bid to MongoDB
-    const newBid = new Bid({ auctionId, userId, amount, status: 'active' });
-    await newBid.save();
-
-    // Update Redis with new highest bid
-    await redis.set(redisKey, amount.toString());
-
-    // Update auction's currentBid and currentBidder (calls Member 2's service)
+    let newBid;
     try {
-      await axios.put(
-        `${process.env.AUCTION_SERVICE_URL}/api/auctions/${auctionId}/bid`,
-        { currentBid: amount, currentBidder: userId },
-        { headers: { 'x-internal-secret': process.env.INTERNAL_SECRET } }
-      );
-    } catch (err) {
-      console.error('⚠️ Could not update auction service:', err.message);
-    }
+      // Mark previous active bids as outbid
+      const previousHighestBid = await Bid.findOne({ auctionId, status: 'active' }).session(session);
 
-    // Notify previously highest bidder they got outbid (calls Member 4's service)
-    if (previousHighestBid && previousHighestBid.userId !== userId) {
+      await Bid.updateMany(
+        { auctionId, status: 'active' },
+        { $set: { status: 'outbid' } },
+        { session }
+      );
+
+      // Save new bid
+      newBid = new Bid({ auctionId, userId, amount, status: 'active' });
+      await newBid.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      // ── Update Redis cache with new highest bid ──
+      await redis.set(redisKey, amount.toString());
+
+      // ── Update auction service ───────────────────
       try {
-        await axios.post(
-          `${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/outbid`,
-          {
-            userId: previousHighestBid.userId,
-            auctionId: auctionId,
-            newHighestBid: amount,
-          }
+        await axios.put(
+          `${process.env.AUCTION_SERVICE_URL}/api/auctions/${auctionId}/bid`,
+          { currentBid: amount, currentBidder: userId },
+          { headers: { 'x-internal-secret': process.env.INTERNAL_SECRET } }
         );
       } catch (err) {
-        console.error('⚠️ Notification service unreachable:', err.message);
+        console.error('⚠️ Could not update auction service:', err.message);
       }
+
+      // ── Push BullMQ job instead of calling Member 4 directly ──
+      if (previousHighestBid && previousHighestBid.userId !== userId) {
+        await notificationQueue.add('outbid-notification', {
+          userId: previousHighestBid.userId,
+          auctionId: auctionId,
+          newHighestBid: amount,
+        });
+        console.log('📨 Notification job pushed to queue');
+      }
+
+    } catch (err) {
+      await session.abortTransaction();
+      session.endSession();
+      throw err;
     }
 
     return res.status(201).json({
@@ -113,6 +148,12 @@ const placeBid = async (req, res) => {
   } catch (err) {
     console.error('placeBid error:', err.message);
     return res.status(500).json({ message: 'Server error. Please try again.' });
+  } finally {
+    // ── Always release the lock when done ─────────
+    const currentLock = await redis.get(lockKey);
+    if (currentLock === lockValue) {
+      await redis.del(lockKey);
+    }
   }
 };
 
@@ -139,7 +180,6 @@ const getHighestBid = async (req, res) => {
   try {
     const { auctionId } = req.params;
 
-    // Try Redis first
     const redisKey = `auction:${auctionId}:highestBid`;
     const cachedHighest = await redis.get(redisKey);
 
@@ -151,7 +191,6 @@ const getHighestBid = async (req, res) => {
       });
     }
 
-    // Fallback to MongoDB
     const highestBid = await Bid.findOne({ auctionId }).sort({ amount: -1 });
 
     if (!highestBid) {
