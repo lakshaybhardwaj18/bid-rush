@@ -4,6 +4,7 @@ const cors = require('cors')
 require('dotenv').config()
 
 const app = express()
+
 app.use(cors())
 
 app.get('/', (req, res) => {
@@ -13,32 +14,25 @@ app.get('/', (req, res) => {
 app.use('/api/auth', createProxyMiddleware({
   target: 'http://localhost:5001',
   changeOrigin: true,
-  pathRewrite: { '^/api/auth': '/api/auth' },
-   on: {
-    proxyReq: (proxyReq, req) => {
-      if (req.headers['authorization']) {
-        proxyReq.setHeader('authorization', req.headers['authorization'])
-      }
-    }
-  }
+  pathRewrite: { '^/api/auth': '/api/auth' }
 }))
 
 app.use('/api/auctions', createProxyMiddleware({
   target: 'http://localhost:5002',
   changeOrigin: true,
-  pathRewrite: { '^/api/auctions': '/api/auctions' }
+  pathRewrite: { '^/api/auctions': '/auctions' }
 }))
 
 app.use('/api/bids', createProxyMiddleware({
   target: 'http://localhost:5003',
   changeOrigin: true,
-  pathRewrite: { '^/api/bids': '/api/bids' }
+  pathRewrite: { '^/api/bids': '/bids' }
 }))
 
 app.use('/api/notifications', createProxyMiddleware({
   target: 'http://localhost:5004',
   changeOrigin: true,
-  pathRewrite: { '^/api/notifications': '/api/notifications' }
+  pathRewrite: { '^/api/notifications': '/notifications' }
 }))
 
 app.listen(5000, () => {
