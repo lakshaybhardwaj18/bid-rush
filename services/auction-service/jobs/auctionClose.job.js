@@ -1,20 +1,12 @@
-// ============================================================
-// auctionClose.job.js — Runs every minute to manage auction status
-// Uses node-cron (like a scheduled alarm clock for the server)
-//
-// Job 1: "upcoming" → "active"  when startTime arrives
-// Job 2: "active"   → "ended"   when endTime passes
-// ============================================================
-
 const cron = require('node-cron')
 const Auction = require('../models/auction.model')
+const Transaction = require('../models/transaction.model')
 
-// Runs every minute: '* * * * *'
 cron.schedule('* * * * *', async () => {
   try {
     const now = new Date()
 
-    // Activate auctions whose startTime has passed
+    // Activate upcoming auctions
     const activated = await Auction.updateMany(
       { status: 'upcoming', startTime: { $lte: now } },
       { $set: { status: 'active' } }
@@ -23,15 +15,30 @@ cron.schedule('* * * * *', async () => {
       console.log(`Cron: Activated ${activated.modifiedCount} auction(s)`)
     }
 
-    // Close auctions whose endTime has passed
+    // Close expired auctions
     const expiredAuctions = await Auction.find({ status: 'active', endTime: { $lte: now } })
 
     for (const auction of expiredAuctions) {
+      // Update auction status to ended
       await Auction.findByIdAndUpdate(auction._id, {
         status: 'ended',
         winner: auction.currentBidder || null
       })
       console.log(`Cron: Closed auction "${auction.title}" | Winner: ${auction.currentBidder || 'No bids'}`)
+
+      // Save transaction ONLY if there was a winner (someone placed a bid)
+      if (auction.currentBidder) {
+        const transaction = await Transaction.create({
+          auctionId: auction._id,
+          auctionTitle: auction.title,
+          finalPrice: auction.currentBid,
+          winnerId: auction.currentBidder,
+          sellerId: auction.createdBy
+        })
+        console.log(`Cron: Transaction saved for "${auction.title}" | Final Price: ${auction.currentBid}`)
+      } else {
+        console.log(`Cron: No transaction for "${auction.title}" — no bids placed`)
+      }
     }
 
   } catch (error) {
