@@ -1,39 +1,102 @@
 const express = require('express')
-const { createProxyMiddleware } = require('http-proxy-middleware')
+const axios = require('axios')
 const cors = require('cors')
 require('dotenv').config()
 
 const app = express()
 
 app.use(cors())
+app.use(express.json())
+
+app.use((req, res, next) => {
+  console.log('Gateway received:', req.method, req.originalUrl)
+  next()
+})
 
 app.get('/', (req, res) => {
   res.json({ message: 'API Gateway running' })
 })
 
-app.use('/api/auth', createProxyMiddleware({
-  target: 'http://localhost:5001',
-  changeOrigin: true,
-  pathRewrite: { '^/api/auth': '/api/auth' }
-}))
+// Auth Service — strips /api/auth before forwarding
+app.use('/api/auth', async (req, res) => {
+  try {
+    const strippedPath = req.originalUrl.replace('/api/auth', '')
+    const url = `http://localhost:5001${strippedPath}`
+    console.log('Forwarding to:', url)
+    const response = await axios({
+      method: req.method,
+      url,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { authorization: req.headers.authorization })
+      }
+    })
+    res.status(response.status).json(response.data)
+  } catch (error) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Gateway error' })
+  }
+})
 
-app.use('/api/auctions', createProxyMiddleware({
-  target: 'http://localhost:5002',
-  changeOrigin: true,
-  pathRewrite: { '^/api/auctions': '/auctions' }
-}))
+// Auction Service — keeps /api/auctions
+app.use('/api/auctions', async (req, res) => {
+  try {
+    const url = `http://localhost:5002${req.originalUrl}`
+    console.log('Forwarding to:', url)
+    const response = await axios({
+      method: req.method,
+      url,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { authorization: req.headers.authorization })
+      }
+    })
+    res.status(response.status).json(response.data)
+  } catch (error) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Gateway error' })
+  }
+})
 
-app.use('/api/bids', createProxyMiddleware({
-  target: 'http://localhost:5003',
-  changeOrigin: true,
-  pathRewrite: { '^/api/bids': '/bids' }
-}))
+// Bid Service — keeps /api/bids
+app.use('/api/bids', async (req, res) => {
+  try {
+    const url = `http://localhost:5003${req.originalUrl}`
+    console.log('Forwarding to:', url)
+    const response = await axios({
+      method: req.method,
+      url,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { authorization: req.headers.authorization })
+      }
+    })
+    res.status(response.status).json(response.data)
+  } catch (error) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Gateway error' })
+  }
+})
 
-app.use('/api/notifications', createProxyMiddleware({
-  target: 'http://localhost:5004',
-  changeOrigin: true,
-  pathRewrite: { '^/api/notifications': '/notifications' }
-}))
+// Notification Service — keeps /api/notifications
+app.use('/api/notifications', async (req, res) => {
+  try {
+    const url = `http://localhost:5004${req.originalUrl}`
+    console.log('Forwarding to:', url)
+    const response = await axios({
+      method: req.method,
+      url,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { authorization: req.headers.authorization })
+      }
+    })
+    res.status(response.status).json(response.data)
+  } catch (error) {
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Gateway error' })
+  }
+})
 
 app.listen(5000, () => {
   console.log('API Gateway running on port 5000')

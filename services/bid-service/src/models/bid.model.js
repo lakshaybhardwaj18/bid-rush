@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-
-const bidSchema = new mongoose.Schema(
-  {
+const bidSchema = new mongoose.Schema
+({
     auctionId: {
       type: String,
       required: [true, 'Auction ID is required'],
@@ -25,5 +24,4 @@ const bidSchema = new mongoose.Schema(
     timestamps: true
   }
 );
-
 module.exports = mongoose.model('Bid', bidSchema);

@@ -12,16 +12,16 @@ const { createAuction, getAllAuctions, getAuctionById, updateAuction, deleteAuct
 const { verifyToken } = require('../middleware/auth.middleware')
 
 // PUBLIC routes — no login needed
-router.get('/auctions', getAllAuctions)
-router.get('/auctions/my', verifyToken, getMyAuctions)   // must be before /auctions/:id
-router.get('/auctions/:id', getAuctionById)
+router.get('/api/auctions', getAllAuctions)
+router.get('/api/auctions/my', verifyToken, getMyAuctions)
+router.get('/api/auctions/:id', getAuctionById)
 
 // PROTECTED routes — login required
-router.post('/auctions', verifyToken, createAuction)
-router.put('/auctions/:id', verifyToken, updateAuction)
-router.delete('/auctions/:id', verifyToken, deleteAuction)
+router.post('/api/auctions', verifyToken, createAuction)
+router.put('/api/auctions/:id', verifyToken, updateAuction)
+router.delete('/api/auctions/:id', verifyToken, deleteAuction)
 
 // INTERNAL route — Bid Service only
-router.put('/auctions/:id/bid', updateBid)
+router.put('/api/auctions/:id/bid', updateBid)
 
 module.exports = router

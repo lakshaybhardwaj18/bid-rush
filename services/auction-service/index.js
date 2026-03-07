@@ -19,7 +19,12 @@ app.use(express.json())
 app.get('/', (req, res) => {
   res.json({ message: 'Auction Service running' })
 })
+app.use((req, res, next) => {
+  console.log('Auction service received:', req.method, req.path)
+  next()
+})
 
+app.use('/', auctionRoutes)
 // Routes — mounted at root because gateway already has /api/auctions
 app.use('/', auctionRoutes)
 
