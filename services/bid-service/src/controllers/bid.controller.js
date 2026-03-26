@@ -3,15 +3,12 @@ const Redis = require('ioredis');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const { Queue } = require('bullmq');
-
 // ── Redis connection ──────────────────────────────
 const redis = new Redis(process.env.REDIS_URL, {
     maxRetriesPerRequest: null
 });
-
-redis.on('connect', () => console.log('✅ Redis connected'));
-redis.on('error', (err) => console.error('❌ Redis error:', err.message));
-
+redis.on('connect', () => console.log('Redis connected'));
+redis.on('error', (err) => console.error('Redis error:', err.message));
 // ── BullMQ notification queue ─────────────────────
 // Instead of calling Member 4 directly, we push a job to this queue
 // Member 4 will listen to this queue and process notifications
@@ -20,7 +17,6 @@ const notificationQueue = new Queue('notification-queue', {
         maxRetriesPerRequest: null
     })
 });
-
 // ── Separate connection to auction-db ─────────────
 const auctionConn = mongoose.createConnection(
     process.env.AUCTION_DB_URI
@@ -82,15 +78,13 @@ const placeBid = async (req, res) => {
 
         if (amount <= currentHighest) {
             return res.status(400).json({
-                message: `Your bid of $${amount} must be higher than the current highest bid of $${currentHighest}.`
+                message: `Your bid of Rs.${amount} must be higher than the current highest bid of Rs.${currentHighest}.`
             });
         }
-
         // ── MongoDB Transaction ────────────────────────
         // Ensures both operations succeed or both fail together
         const session = await mongoose.startSession();
         session.startTransaction();
-
         let newBid;
         try {
             // Mark previous active bids as outbid
@@ -120,7 +114,7 @@ const placeBid = async (req, res) => {
                     { headers: { 'x-internal-secret': process.env.INTERNAL_SECRET } }
                 );
             } catch (err) {
-                console.error('⚠️ Could not update auction service:', err.message);
+                console.error(' Could not update auction service:', err.message);
             }
 
             // ── Push BullMQ job instead of calling Member 4 directly ──
@@ -130,7 +124,7 @@ const placeBid = async (req, res) => {
                     auctionId: auctionId,
                     newHighestBid: amount,
                 });
-                console.log('📨 Notification job pushed to queue');
+                console.log('Notification job pushed to queue');
             }
 
         } catch (err) {

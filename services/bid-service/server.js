@@ -19,12 +19,12 @@ app.get('/health', (req, res) => {
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
+    console.log('MongoDB connected');
     app.listen(PORT, () => {
-      console.log(`✅ Bid Service running on http://localhost:${PORT}`);
+      console.log(`Bid Service running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error(' MongoDB connection failed:', err.message);
     process.exit(1);
   });

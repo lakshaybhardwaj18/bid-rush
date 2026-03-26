@@ -37,7 +37,6 @@ function AuctionList() {
         a.title.toLowerCase().includes(search.toLowerCase()),
       );
     }
-
     if (status !== "all") {
       result = result.filter((a) => a.status === status);
     }

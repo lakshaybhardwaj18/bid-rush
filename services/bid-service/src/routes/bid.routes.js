@@ -10,7 +10,7 @@ const {
 
 router.use(verifyToken);
 
-router.post('/place', placeBid);
+router.post('/place', verifyToken,placeBid);
 router.get('/auction/:auctionId', getBidsByAuction);
 router.get('/highest/:auctionId', getHighestBid);
 router.get('/my-bids', getBidsByUser);

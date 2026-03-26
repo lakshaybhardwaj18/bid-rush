@@ -22,7 +22,7 @@ function AuctionDetail() {
     api
       .get(`/api/auctions/${id}`)
       .then((res) => {
-        setAuction(res.data);
+        setAuction(res.data.auction);
         setLoading(false);
       })
       .catch(() => {
@@ -34,7 +34,7 @@ function AuctionDetail() {
       .then((res) => setBids(res.data))
       .catch(() => {});
   }, [id]);
-
+ 
   useEffect(() => {
     if (!auction) return;
     const interval = setInterval(() => {
@@ -101,7 +101,7 @@ function AuctionDetail() {
     }
     setBidLoading(true);
     try {
-      await api.post("/api/bids", { auctionId: id, amount: Number(bidAmount) });
+      await api.post("/api/bids/place", { auctionId: id, amount: Number(bidAmount) });
       setBidSuccess("Bid placed! ");
       setBidAmount("");
     } catch (err) {

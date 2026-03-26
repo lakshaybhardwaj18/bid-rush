@@ -13,11 +13,9 @@ function CreateAuction() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -34,7 +32,6 @@ function CreateAuction() {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 py-12">
       <div className="absolute top-20 left-1/4 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -114,12 +111,12 @@ function CreateAuction() {
               className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
             >
               <option value="">Pick a category</option>
-              <option value="electronics">Electronics</option>
-              <option value="fashion">Fashion</option>
-              <option value="antiques">Antiques</option>
-              <option value="vehicles">Vehicles</option>
-              <option value="collectibles">Collectibles</option>
-              <option value="other">Other</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Fashion">Fashion</option>
+              <option value="Antiques">Antiques</option>
+              <option value="Vehicles">Vehicles</option>
+              <option value="Collectibles">Collectibles</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 

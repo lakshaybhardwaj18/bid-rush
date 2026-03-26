@@ -19,12 +19,10 @@ const createAuction = async (req, res) => {
     if (new Date(endTime) <= new Date(startTime)) {
       return res.status(400).json({ message: 'End time must be after start time' })
     }
-
     // Determine status based on startTime
     const now = new Date()
     let status = 'upcoming'
     if (new Date(startTime) <= now) status = 'active'
-
     const auction = await Auction.create({
       title,
       description,

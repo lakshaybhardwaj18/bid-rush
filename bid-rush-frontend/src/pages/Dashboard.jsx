@@ -8,20 +8,18 @@ function Dashboard() {
   const [myAuctions, setMyAuctions] = useState([]);
   const [myTransactions, setMyTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const user = JSON.parse(localStorage.getItem("user"));
-
   useEffect(() => {
     const fetchAll = async () => {
       try {
         const [bidsRes, auctionsRes, transactionsRes] = await Promise.all([
-          api.get("/api/bids/user/mybids"),
-          api.get("/api/auctions/user/myauctions"),
-          api.get("/api/auctions/user/mytransactions"),
+          api.get("/api/bids/my-bids"),
+          api.get("/api/auctions/my"),
+          //api.get("/api/auctions/user/mytransactions"),
         ]);
-        setMyBids(bidsRes.data);
-        setMyAuctions(auctionsRes.data);
-        setMyTransactions(transactionsRes.data);
+        setMyBids(bidsRes.data.bids || []);
+        setMyAuctions(auctionsRes.data.auctions || []);
+       // setMyTransactions(transactionsRes.data);
       } catch (err) {
         console.log(err);
       } finally {
