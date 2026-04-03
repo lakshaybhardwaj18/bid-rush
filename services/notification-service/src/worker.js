@@ -6,7 +6,12 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:5001'
 
 async function getUserInfo(userId) {
   try {
-    const response = await axios.get(`${AUTH_SERVICE_URL}/user/${userId}`);
+    // CORRECT
+      const response = await axios.get(`${AUTH_SERVICE_URL}/user/${userId}`, {
+      headers: {
+        'x-internal-secret': process.env.INTERNAL_SECRET
+      }
+    });
     return response.data;
   } catch (err) {
     console.error(`[Worker] Failed to fetch user info for ${userId}:`, err.message);

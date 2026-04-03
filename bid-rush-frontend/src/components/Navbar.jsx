@@ -11,35 +11,35 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-white/10 px-6 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
       <Link to="/auctions" className="flex items-center gap-2">
-        <span className="text-xl font-display font-bold text-white tracking-tight">
-          BID<span className="text-purple-400">RUSH</span>
+        <span className="text-lg font-display font-bold text-gray-900 tracking-tight">
+          Bid<span className="text-emerald-500">Rush</span>
         </span>
-        <span className="text-yellow-400 text-lg">⚡</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mb-3 inline-block" />
       </Link>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {user ? (
           <>
-            <span className="text-sm text-white/50 hidden sm:block">
-              gm, <span className="text-white font-medium">{user.name}</span>
+            <span className="text-sm text-gray-400 hidden sm:block">
+              Hi, <span className="text-gray-700 font-medium">{user.name}</span>
             </span>
             <Link
               to="/create-auction"
-              className="bg-purple-500 hover:bg-purple-400 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-all duration-200 hover:scale-105"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
             >
               + Drop Auction
             </Link>
             <Link
               to="/dashboard"
-              className="text-sm text-white/60 hover:text-white transition"
+              className="text-sm text-gray-500 hover:text-gray-900 transition"
             >
               Dashboard
             </Link>
             <button
               onClick={handleLogout}
-              className="text-sm text-white/40 hover:text-red-400 transition"
+              className="text-sm text-gray-400 hover:text-red-500 transition"
             >
               Leave →
             </button>
@@ -48,13 +48,13 @@ function Navbar() {
           <>
             <Link
               to="/login"
-              className="text-sm text-white/60 hover:text-white transition"
+              className="text-sm text-gray-500 hover:text-gray-900 transition"
             >
               Login
             </Link>
             <Link
               to="/register"
-              className="bg-purple-500 hover:bg-purple-400 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-all duration-200 hover:scale-105"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
             >
               Join Free
             </Link>
