@@ -54,7 +54,6 @@ const placeBid = async (req, res) => {
     if (!lock) {
         return res.status(429).json({ message: 'Another bid is being processed. Please try again.' });
     }
-
     try {
         // ── Check auction exists and is active ────────
         let auction;
@@ -89,13 +88,11 @@ const placeBid = async (req, res) => {
         try {
             // Mark previous active bids as outbid
             const previousHighestBid = await Bid.findOne({ auctionId, status: 'active' }).session(session);
-
             await Bid.updateMany(
                 { auctionId, status: 'active' },
                 { $set: { status: 'outbid' } },
                 { session }
             );
-
             // Save new bid
             newBid = new Bid({ auctionId, userId, amount, status: 'active' });
             await newBid.save({ session });

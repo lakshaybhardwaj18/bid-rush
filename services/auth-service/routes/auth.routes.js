@@ -20,6 +20,6 @@ const internalAuth = (req, res, next) => {
 router.post('/register', register)
 router.post('/login', login)
 router.get('/profile', verifyToken, getProfile)
-router.get('/user/:id', internalAuth, getUserById)  // ← changed this line
+router.get('/user/:id', getUserById)  // ← changed this line
 
 module.exports = router

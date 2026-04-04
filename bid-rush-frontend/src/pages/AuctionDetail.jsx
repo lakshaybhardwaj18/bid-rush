@@ -32,11 +32,13 @@ function AuctionDetail() {
               api.get(`/api/auth/user/${auctionData.winner}`),
               api.get(`/api/auth/user/${auctionData.createdBy}`),
             ]);
-            const isWinner = String(user._id) === String(auctionData.winner);
+            // ✅ Fixed: user.id instead of user._id
+            const isWinner = String(user.id) === String(auctionData.winner);
             setContactCard({
               type: isWinner ? "winner" : "seller",
               item: auctionData.title,
               price: auctionData.currentBid,
+              // winnerRes.data and sellerRes.data are direct user objects
               contact: isWinner ? sellerRes.data : winnerRes.data,
             });
           } catch (e) {
@@ -77,12 +79,15 @@ function AuctionDetail() {
     socket.emit("join_auction", id);
 
     socket.on("new_bid", (bidData) => {
+      // ✅ Updates live feed with new bid
       setBids((prev) => [bidData, ...prev]);
+      // ✅ Updates highest bid display
       setAuction((prev) => ({ ...prev, currentBid: bidData.amount }));
     });
 
     socket.on("outbid_alert", (data) => {
-      if (user && data.targetUserId === user._id)
+      // ✅ Fixed: user.id instead of user._id
+      if (user && data.targetUserId === user.id)
         alert("You have been outbid!");
     });
 
@@ -208,8 +213,9 @@ function AuctionDetail() {
           </div>
         </div>
 
-        {/* Place Bid */}
-        {auction.status === "active" && user && (
+        {/* Place Bid — ✅ Fixed: hidden for auction creator */}
+        {auction.status === "active" && user &&
+         String(user.id) !== String(auction.createdBy) && (
           <div className="bg-white border border-gray-200 rounded-2xl p-6 animate-fadeUp">
             <h2 className="font-display text-lg font-bold text-gray-900 mb-4">
               Place Your Bid
@@ -294,7 +300,7 @@ function AuctionDetail() {
         {contactCard && (
           <div className="bg-emerald-900 border border-emerald-700 rounded-2xl p-6 animate-fadeUp">
             <h2 className="font-display text-xl font-bold text-emerald-300 mb-1">
-              {contactCard.type === "winner" ? "You won!" : "Auction sold!"}
+              {contactCard.type === "winner" ? "🎉 You Won!" : "💰 Auction Sold!"}
             </h2>
             <p className="text-emerald-100/60 text-sm mb-1">
               Item: <span className="text-white">{contactCard.item}</span>
