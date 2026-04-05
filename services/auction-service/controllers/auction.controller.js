@@ -188,4 +188,26 @@ const getMyAuctions = async (req, res) => {
   }
 }
 
-module.exports = { createAuction, getAllAuctions, getAuctionById, updateAuction, deleteAuction, updateBid, getMyAuctions }
+// ---- ADMIN DELETE AUCTION ----
+const adminDeleteAuction = async (req, res) => {
+  try {
+    const adminSecret = req.headers['x-admin-secret'];
+    if (adminSecret !== process.env.ADMIN_SECRET) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) {
+      return res.status(404).json({ message: 'Auction not found' });
+    }
+
+    await Auction.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Auction deleted by admin' });
+
+  } catch (error) {
+    console.error('adminDeleteAuction error:', error);
+    res.status(500).json({ message: 'Server error deleting auction' });
+  }
+}
+
+module.exports = { createAuction, getAllAuctions, getAuctionById, updateAuction, deleteAuction, updateBid, getMyAuctions, adminDeleteAuction }

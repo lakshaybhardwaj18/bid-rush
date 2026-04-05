@@ -49,7 +49,9 @@ app.use('/api/auctions', async (req, res) => {
       data: req.body,
       headers: {
         'Content-Type': 'application/json',
-        ...(req.headers.authorization && { authorization: req.headers.authorization })
+        ...(req.headers.authorization && { authorization: req.headers.authorization }),
+        ...(req.headers['x-admin-secret'] && { 'x-admin-secret': req.headers['x-admin-secret'] }),
+        ...(req.headers['x-internal-secret'] && { 'x-internal-secret': req.headers['x-internal-secret'] }),
       }
     })
     res.status(response.status).json(response.data)

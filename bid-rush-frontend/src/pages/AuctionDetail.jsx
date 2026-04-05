@@ -74,57 +74,64 @@ function AuctionDetail() {
     return () => clearInterval(interval);
   }, [auction]);
 
-  useEffect(() => {
-    socket.connect();
-    socket.emit("join_auction", id);
+ useEffect(() => {
+  // Only connect if not already connected
+  if (!socket.connected) {
+    socket.connect()
+  }
 
-    socket.on("new_bid", (bidData) => {
-      // ✅ Updates live feed with new bid
-      setBids((prev) => [bidData, ...prev]);
-      // ✅ Updates highest bid display
-      setAuction((prev) => ({ ...prev, currentBid: bidData.amount }));
+  socket.emit("join_auction", id)
+
+  // Rejoin room after reconnection
+  socket.on("reconnect", () => {
+    console.log("Socket reconnected — rejoining room")
+    socket.emit("join_auction", id)
+  })
+
+  socket.on("new_bid", (bidData) => {
+    setBids((prev) => [bidData, ...prev]);
+    setAuction((prev) => ({ ...prev, currentBid: bidData.amount }));
+  });
+
+  socket.on("outbid_alert", (data) => {
+    if (user && data.targetUserId === user.id)
+      alert("You have been outbid!");
+  });
+
+  socket.on("auction_ending_soon", () =>
+    alert("Ending in less than 5 minutes!")
+  );
+
+  socket.on("auction_won", (data) => {
+    setContactCard({
+      type: "winner",
+      item: data.auctionTitle,
+      price: data.finalPrice,
+      contact: data.sellerInfo,
     });
+    setAuction((prev) => ({ ...prev, status: "ended" }));
+  });
 
-    socket.on("outbid_alert", (data) => {
-      // ✅ Fixed: user.id instead of user._id
-      if (user && data.targetUserId === user.id)
-        alert("You have been outbid!");
+  socket.on("auction_sold", (data) => {
+    setContactCard({
+      type: "seller",
+      item: data.auctionTitle,
+      price: data.finalPrice,
+      contact: data.winnerInfo,
     });
+    setAuction((prev) => ({ ...prev, status: "ended" }));
+  });
 
-    socket.on("auction_ending_soon", () =>
-      alert("Ending in less than 5 minutes!")
-    );
-
-    socket.on("auction_won", (data) => {
-      setContactCard({
-        type: "winner",
-        item: data.auctionTitle,
-        price: data.finalPrice,
-        contact: data.sellerInfo,
-      });
-      setAuction((prev) => ({ ...prev, status: "ended" }));
-    });
-
-    socket.on("auction_sold", (data) => {
-      setContactCard({
-        type: "seller",
-        item: data.auctionTitle,
-        price: data.finalPrice,
-        contact: data.winnerInfo,
-      });
-      setAuction((prev) => ({ ...prev, status: "ended" }));
-    });
-
-    return () => {
-      socket.off("new_bid");
-      socket.off("outbid_alert");
-      socket.off("auction_ending_soon");
-      socket.off("auction_won");
-      socket.off("auction_sold");
-      socket.emit("leave_auction", id);
-      socket.disconnect();
-    };
-  }, [id]);
+  return () => {
+    socket.off("reconnect")
+    socket.off("new_bid");
+    socket.off("outbid_alert");
+    socket.off("auction_ending_soon");
+    socket.off("auction_won");
+    socket.off("auction_sold");
+    socket.emit("leave_auction", id);
+  };
+}, [id]);
 
   const handleBid = async () => {
     setBidError("");
