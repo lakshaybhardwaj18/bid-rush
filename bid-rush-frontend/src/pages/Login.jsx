@@ -29,18 +29,51 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center blur-sm scale-110"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1676181739859-08330dea8999?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+        }}
+      />
 
-      <div className="w-full max-w-sm animate-fadeUp">
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/40" />
 
-        {/* Logo mark */}
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Feature Marquee Box */}
+      <div className="absolute top-24 w-full flex justify-center z-10 px-4">
+        <div className="w-full max-w-4xl overflow-hidden rounded-xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg py-3">
+          <div className="animate-marquee flex gap-16 text-white text-base font-semibold px-6">
+            <span>Real-time Bidding</span>
+            <span>Secure JWT Authentication</span>
+            <span>Live Auction Updates</span>
+            <span>Transparent Bid History</span>
+            <span>Scalable Microservice Architecture</span>
+
+            {/* duplicate for smooth loop */}
+            <span>Real-time Bidding</span>
+            <span>Secure JWT Authentication</span>
+            <span>Live Auction Updates</span>
+            <span>Transparent Bid History</span>
+            <span>Scalable Microservice Architecture</span>
+          </div>
+        </div>
+      </div>
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-sm animate-fadeUp">
+        {/* Logo */}
         <div className="text-center mb-10">
-          <span className="font-display text-2xl font-bold text-gray-900">
-            Bid<span className="text-emerald-500">Rush</span>
+          <span className="font-display text-2xl font-bold text-white">
+            Bid<span className="text-emerald-400">Rush</span>
           </span>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+        <div className="bg-white/95 backdrop-blur-md border border-gray-200 rounded-2xl p-8 shadow-2xl">
           <div className="mb-7">
             <h1 className="font-display text-2xl font-bold text-gray-900 mb-1">
               Welcome back
@@ -49,7 +82,7 @@ function Login() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-500 px-4 py-2.5 rounded-lg mb-5 text-sm animate-fadeIn">
+            <div className="bg-red-50 border border-red-100 text-red-500 px-4 py-2.5 rounded-lg mb-5 text-sm">
               {error}
             </div>
           )}
@@ -60,13 +93,16 @@ function Login() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
                   {field}
                 </label>
+
                 <input
                   type={field}
                   name={field}
                   value={formData[field]}
                   onChange={handleChange}
                   required
-                  placeholder={field === "email" ? "you@example.com" : "••••••••"}
+                  placeholder={
+                    field === "email" ? "you@example.com" : "••••••••"
+                  }
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all"
                 />
               </div>
@@ -83,7 +119,10 @@ function Login() {
 
           <p className="text-sm text-center text-gray-400 mt-6">
             New here?{" "}
-            <Link to="/register" className="text-emerald-600 hover:text-emerald-500 font-medium transition">
+            <Link
+              to="/register"
+              className="text-emerald-600 hover:text-emerald-500 font-medium transition"
+            >
               Create account
             </Link>
           </p>
