@@ -1,2 +1,2 @@
 #BID rush
-Authors - VIT rangers
+author - Sharan Sansanwal
