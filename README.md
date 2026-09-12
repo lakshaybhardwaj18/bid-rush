@@ -6,17 +6,20 @@ A full-stack real-time auction platform built with MERN stack and Microservices 
 
 ## Architecture
 
+```
 React Frontend (5173)
-↓
-API Gateway (5000)
-↓
-┌─────┬──────┬────────────┐
-Auth Auction Bid Notification
-5001 5002 5003 5004
-↓ ↓ ↓ ↓
-MongoDB MongoDB MongoDB Redis
-+Redis +BullMQ
-+BullMQ +Socket.io
+         ↓
+  API Gateway (5000)
+         ↓
+┌────────┬─────────┬──────────┬──────────────┐
+│  Auth  │ Auction │   Bid    │ Notification │
+│  5001  │  5002   │  5003    │    5004      │
+│   ↓    │    ↓    │    ↓     │      ↓       │
+│MongoDB │ MongoDB │ MongoDB  │    Redis     │
+│        │         │  +Redis  │   +BullMQ    │
+│        │         │  +BullMQ │  +Socket.io  │
+└────────┴─────────┴──────────┴──────────────┘
+```
 
 
 ---
@@ -51,40 +54,41 @@ MongoDB MongoDB MongoDB Redis
 
 ##  Project Structure
 
+```
 bid-rush/
-├── gateway/ # API Gateway (Port 5000)
-│ ├── index.js
-│ └── .env
+├── gateway/
+│   ├── index.js
+│   └── .env
 ├── services/
-│ ├── auth-service/ # Authentication (Port 5001)
-│ │ ├── controllers/
-│ │ ├── middleware/
-│ │ ├── models/
-│ │ ├── routes/
-│ │ └── index.js
-│ ├── auction-service/ # Auctions (Port 5002)
-│ │ ├── controllers/
-│ │ ├── jobs/
-│ │ ├── middleware/
-│ │ ├── models/
-│ │ ├── routes/
-│ │ └── index.js
-│ ├── bid-service/ # Bidding (Port 5003)
-│ │ └── src/
-│ │ ├── controllers/
-│ │ ├── middleware/
-│ │ ├── models/
-│ │ └── routes/
-│ └── notification-service/ # Notifications (Port 5004)
-│ ├── index.js
-│ ├── worker.js
-│ └── redis.js
-└── client/ # React Frontend (Port 5173)
-└── src/
-├── pages/
-├── components/
-└── utils/
-
+│   ├── auth-service/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   └── index.js
+│   ├── auction-service/
+│   │   ├── controllers/
+│   │   ├── jobs/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   └── index.js
+│   ├── bid-service/
+│   │   └── src/
+│   │       ├── controllers/
+│   │       ├── middleware/
+│   │       ├── models/
+│   │       └── routes/
+│   └── notification-service/
+│       ├── index.js
+│       ├── worker.js
+│       └── redis.js
+└── client/
+    └── src/
+        ├── pages/
+        ├── components/
+        └── utils/
+```
 
 ---
 
